@@ -1,7 +1,40 @@
+version: '3.8'
 services:
+  postgres:
+    image: postgres
+    container_name: tenpo-pt-postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: tenpopt
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./tenpo-pt-docker-backend
+      dockerfile: Dockerfile
+    container_name: tenpo-pt-backend
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+
   frontend:
     build:
-      context: .
+      context: ./tenpo-pt-docker
       dockerfile: Dockerfile
     container_name: tenpo-pt-frontend
     ports:
@@ -17,3 +50,4 @@ volumes:
 networks:
   app-network:
     driver: bridge
+    name: app-network
